@@ -1,3 +1,1652 @@
 # Chapter 2
 
-This is chapter two. 
+# Git best practices
+
+Git is a very powerful VCS. It offers significant functionality over
+legacy centralized VCSes such as CVS and subversion. These
+functionalities and options present many choices for workflow. This also
+makes it difficult to find the best method to commit code to a project.
+
+## Convenient configurations
+
+The command line interface of git is powerful in digging out some useful
+information from the commit history. With proper combination, we can get
+informative and well format output from the command line. But the
+headache is that these options are hard to remember. The following
+aliases can make our life easier.
+
+\$ cat \~/.gitconfig
+[user]
+name = Shumin Guo
+email = shumin.guo@experian.com
+[core]
+editor = emacs
+[Alias]
+lg = log --graph --pretty=format:'%Cred%h%Creset %ad %s
+%C(yellow)%d%Creset %C(bold blue)\<%an\>%Creset' --date=short --decorate
+hist = log --graph --full-history --all --pretty=format:'%Cred%h%Creset%ad %s %C(yellow)%d%Creset %C(bold blue)\<%an\>%Creset' --date=short
+ci = commit -a
+co = checkout
+st = status
+stat = status
+br = branch
+wdiff = diff --color-words
+lol = log --graph --decorate --pretty=oneline --abbrev-commit
+For example, I can take a look at my log in a nice and neat way by
+using:
+\$ git lg steve
+\* 996c2e3 2014-06-19 change 1 (HEAD, steve2) \<Shumin\>
+\* 77f0942 2014-06-19 added file branch.steve2.txt \<Shumin\>
+\* 3a516cf 2014-06-20 change 7 (steve1) \<Shumin\>
+\* 263dc51 2014-06-20 Change 7 \<Shumin\>
+\* 3724a8b 2014-06-19 change 6. \<Shumin\>
+\* e85f5a3 2014-06-19 Merge branch 'steve1' into steve \<Shumin\>
+|\\
+| \* 58d1c06 2014-06-19 steve1 change 5 \<Shumin\>
+| \* da5d76b 2014-06-19 steve1 change 4 \<Shumin\>
+\* | cf8677c 2014-06-19 commit five. \<Shumin\>
+|/
+\* 7b9088b 2014-06-19 steve1 change 3 \<Shumin\>
+\* bc3b275 2014-06-19 Merge branch 'steve' into steve1 \<Shumin\>
+|\\
+| \* db59a6e 2014-06-18 commit four (tag: v1.0-steve) \<Shumin\>
+| \* 45e4c57 2014-06-18 commit three. \<Shumin\>
+| \* 113cf6e 2014-06-18 commit two. \<Shumin\>
+| \* 596c485 2014-06-18 commit one. \<Shumin\>
+| \* 727e817 2014-06-18 added steve's branch \<Shumin\>
+\* | 89149a5 2014-06-19 verion --\> 3 \<Shumin\>
+\* | 7ece783 2014-06-19 verion --\> 2 \<Shumin\>
+\* | 60939a7 2014-06-19 added file branch.steve1.txt \<Shumin\>
+\* | beb1c20 2014-06-18 mike edited the trunk. \<Shumin\>
+|/
+\* 409282d 2014-06-18 created the trunk file \<Shumin\>
+More specifically, what this command does is to show commit logs in aneat and colored format.
+## Govern your commits
+As a distributed Version Control System, git has a lot more features and
+flexibilities to make source code control both fun and more productive.But on the other hand, this flexibility also makes it error prone,
+especially for multi-developer environments. If no rules are followed byindividual developers, git can become a burden to the team. This section
+will show you some best practices for using git. The goal is to use gitfor a smooth and more productive software development experience.
+
+### Use small but logical commits
+-   git blame can tell us the history of file revisions
+-   code development history is kept
+-   commit modules/files individually rather than as a whole
+-   commit bug fixes individually
+-   commit function stubs first, then commit implementations on the way
+    of implementation
+### Review code before commit 
+-   use command git add --patch
+-   review what will be committed finally with git commit --cached
+### Better collaboration with others
+-   Don’t work on public branch, use your own private branch, such as    feature branch etc.
+-   When working on a shared branch, use rebase to make your commit
+    history cleaner.
+-   Use merge to re-integrate a feature branch
+-   Bring a feature branch up-to-date with its base branch
+-   Better rebase the feature branch onto the latest base branch before    sharing the branch
+-   If the branch has been shared, merge it to the base branch
+### Steps to work with feature branch
+-   Pull to update with the local master branch
+-   Checkout a feature branch from the master
+-   Work on feature branch, commit early and often
+-   Rebase frequently to incorporate upstream changes
+-   Use interactive rebase on the commits
+-   Merge changes with master
+-   Push changes on the master branch to the upstream
+### Merging and Rebasing
+Merging brings two branches of development together while preserving the
+ancestry of each commit history. While rebasing unifies the branches ofdevelopment by REWRITING changes from the source branch so that they
+appear as children of the destination branch. It requires the commits on
+the source branch to be RE-WRITTEN, which changes their content and
+hashes.
+
+The following graphs illustrated the difference of these two git commands.
+
+A---B---C topic
+/
+D---E---F---G master
+After merge:
+A---B---C topic
+/ \\D---E---F---G---H master
+After rebase:
+A´--B´--C´ topic
+/
+D---E---F---G master
+  -----------------------------------------------------------------------------------------------------------------------------
+  **Method**   **Pros**                         **Cons**
+  ------------ -------------------------------- -------------------------------------------------------------------------------
+  Merge        Simple to use and understand;\   Can cause commit clutter when multiple; people are working on the same branch
+               Commit history well kept         
+
+  Rebase       Simplify commit history;\        Complex to use and understand\
+               Makes shared branch clean        Change structure of the commit history
+  -----------------------------------------------------------------------------------------------------------------------------
+
+Never rebase shared branches!!!!!!!
+
+Basically, what the rebase command does is to merge a few commits into
+one large commit. In this sense, a lot of commit history will be lost.
+And the commit merging activity can also change the structure of the
+commit tree structure, so when you are working with shared repository,
+don’t do the rebase unless very well studied the consequences. The [pro
+git book](http://git-scm.com/book/en/Git-Branching-Rebasing) has a very
+good explanation about rebase.
+
+### Taking advantage of branching
+
+If you are in the following situations, we possibly need to branch out
+from the master.
+
+-   You are about to make a major or disruptive change
+-   You are about to make some changes that might not be used
+-   You want to experiment on something that you are not sure it will
+    work
+-   When you are told to branch out, others might have something they    need to do in master
+
+To avoid conflicts with the master branch, one advice when you are
+working on branches is to commit often and merge often, so that you can
+keep in sync with the master branch.
+
+Two types of branches: public branch and private branch. The public
+branches are those branches that will be shared with other people, and
+private branches are those branches that developers are actually working
+on.
+
+According to the life cycle of a software project, we typically have the
+following branches:
+
+  **Branch Name**   **Public? **        **Main/Supporing**   **Persistent? **   **Branch from**   **Merge to **    **Used for**
+  ----------------- ------------------- -------------------- ------------------ ----------------- ---------------- ---------------------
+  Production        Public              Main                 Y                  UAT               N/A              Production ready
+  UAT               Public              Main                 Y                  Release           Production       UAT stage
+  Release           Public              Main                 Y                  Master            UAT              Release stage
+  Master            Public              Main                 Y                  n/a               n/a              Main development
+  Feature           Typically private   Supporting           N                  Master            Master           Feature development
+  Hotfix/Bugfix     Typically private   Supporting           N                  Any above         Same as source   Bug fixing
+
+There is another type of branch called tracking branch. The purpose of
+this branch is just to keep sync with the origin. For example, the
+branch “master” can be a tracking branch of “origin/master”, and when
+other developers pushes content to the “origin/master” branch, we can
+pull this branch to keep up-to-date with other developers.
+
+![](media/image1.png)
+
+Figure 1 Git work flow for feature development
+
+![](media/image2.png)
+
+Figure 2 Git work flow for release management
+
+![](media/image3.png)
+
+Figure 3 Work flow for hotfixes
+
+![](media/image4.png)
+
+Figure 4 A complete git work flow
+
+## Git workflow in action
+
+This section gives you some hands on suggestions for working with git on
+real project development scenarios. We consider both a single developer
+and multiple developers as examples.
+
+### The best practice git work flow in practice
+
+We will use one sample project to show you how to work with the best
+practice work flow illustrated in Figure 1, Figure 2, Figure 3 and
+Figure 4. For visualization, we will use both the git lg command as well
+as the gitlab network graph.
+
+Create the project and put under git version control
+
+\$ mkdir gitflow
+\$ cd gitflow
+\$ git init
+\$ echo "This is a git flow sample project." \>\> README
+\$ git add .
+\$ git ci -m "Initial version of the project."
+[master (root-commit) ef5556c] Initial version of the project.
+1 file changed, 1 insertion(+)
+create mode 100644 README
+\$ git br
+\* master
+Create two feature branches: feature1 and feature2:
+\$ git br feature1
+\$ git br feature2
+\$ git br
+feature1
+feature2
+\* master
+Work on feature one:
+\$ git co feature1
+Switched to branch 'feature1'
+\$ git br
+\* feature1
+feature2
+master
+\$ echo "This is feature one." \>\> feature1.txt
+\$ git add .
+\$ git ci -m "Initial version of feature one."
+[feature1 276d3ab] Initial version of feature one.
+1 file changed, 1 insertion(+)
+create mode 100644 feature1.txt
+\$ echo "Do some work on feature one." \>\> feature1.txt
+\$ git add .
+\$ git ci -m "some work on feature one."
+[feature1 307be3c] some work on feature one.
+1 file changed, 1 insertion(+)
+\$ echo "Do some work on feature one." \>\> feature1.txt
+\$ git add .
+\$ git ci -m "some work on feature one."
+[feature1 5c9aea0] some work on feature one.
+1 file changed, 1 insertion(+)
+\$ git lg
+\* 5c9aea0 2014-07-01 some work on feature one. (HEAD, feature1)\<Shumin Guo\>
+\* 307be3c 2014-07-01 some work on feature one. \<Shumin Guo\>
+\* 276d3ab 2014-07-01 Initial version of feature one. \<Shumin Guo\>
+\* ef5556c 2014-07-01 Initial version of the project. (master, feature2)
+\<Shumin Guo\>
+Merge the work on feature one back to master:
+\$ git co master
+Already on 'master'
+\$ git lg
+\* ef5556c 2014-07-01 Initial version of the project. (HEAD, master,feature2) \<Shumin Guo\>
+\$ git merge feature1
+Updating ef5556c..5c9aea0
+Fast-forward
+feature1.txt | 3 +++
+1 file changed, 3 insertions(+)
+create mode 100644 feature1.txt
+\$ git lg
+\* 5c9aea0 2014-07-01 some work on feature one. (HEAD, master, feature1)
+\<Shumin Guo\>
+\* 307be3c 2014-07-01 some work on feature one. \<Shumin Guo\>
+\* 276d3ab 2014-07-01 Initial version of feature one. \<Shumin Guo\>
+\* ef5556c 2014-07-01 Initial version of the project. (feature2)\<Shumin Guo\>
+Work on feature two:
+\$ git co feature2
+Switched to branch 'feature2'
+\$ ls
+README
+\$ echo "Do some work on feature one." \>\> feature1.tx\^C
+\$ echo "This is feature two." \>\> feature2.txt
+\$ git add .
+\$ git ci \^C
+\$ git ci -m "Initial version of feature two."
+[feature2 1a31c3a] Initial version of feature two.
+1 file changed, 1 insertion(+)
+create mode 100644 feature2.txt
+\$ echo "Do some work on feature two." \>\> feature2.txt
+\$ git add .
+\$ git ci -m "some work on feature two."
+[feature2 e3bf06c] some work on feature two.
+1 file changed, 1 insertion(+)
+\$ echo "Do some work on feature two." \>\> feature2.txt
+\$ git add .
+\$ git ci -m "some work on feature two."
+[feature2 f5ef113] some work on feature two.
+1 file changed, 1 insertion(+)
+Merge the work on feature two back to master:
+\$ git co master
+Switched to branch 'master'
+\$ git merge feature2 -m "Merge branch feature2."
+Merge made by the 'recursive' strategy.
+feature2.txt | 3 +++
+1 file changed, 3 insertions(+)
+create mode 100644 feature2.txt
+\$ git lg
+\* 5e53aa9 2014-07-01 Merge branch feature2. (HEAD, master) \<Shumin
+Guo\>
+|\\
+| \* f5ef113 2014-07-01 some work on feature two. (feature2) \<ShuminGuo\>
+| \* e3bf06c 2014-07-01 some work on feature two. \<Shumin Guo\>
+| \* 1a31c3a 2014-07-01 Initial version of feature two. \<Shumin Guo\>
+\* | 5c9aea0 2014-07-01 some work on feature one. (feature1) \<Shumin
+Guo\>
+\* | 307be3c 2014-07-01 some work on feature one. \<Shumin Guo\>
+\* | 276d3ab 2014-07-01 Initial version of feature one. \<Shumin Guo\>
+|/
+\* ef5556c 2014-07-01 Initial version of the project. \<Shumin Guo\>
+Feature two is finished. Now we can delete the branch for feature two.
+\$ git br -d feature2
+Deleted branch feature2 (was f5ef113).
+\$ git br
+feature1
+\* master
+Now, work on feature one again, first we need to pull changes frommaster to make sure the feature branch is up-to-date:
+\$ git co feature1
+Switched to branch 'feature1'
+\$ git merge master -m "Merge branch 'master' into feature1"
+Merge made by the 'recursive' strategy.
+feature2.txt | 3 +++
+1 file changed, 3 insertions(+)
+create mode 100644 feature2.txt
+\$ echo "Do some work on feature one." \>\> feature1.txt
+\$ git add .
+\$ git ci -m "some work on feature one."
+[feature1 b328e21] some work on feature one.
+1 file changed, 1 insertion(+)
+Now, we assume feature one’s work is done, we merge its work back to the
+master branch and delete this branch:
+\$ git co master
+Switched to branch 'master'
+\$ git merge feature1 -m "Merge feature1 to master"
+Updating 5e53aa9..77a34b4
+
+Fast-forward (no commit created; -m option ignored)
+feature1.txt | 1 +
+1 file changed, 1 insertion(+)
+\$ git br -d feature1
+Deleted branch feature1 (was 77a34b4).
+Now, we want to add feature3 to the project:
+\$ git br feature3
+\$ git br
+feature3
+\* master
+\$ git co feature3
+Switched to branch 'feature3'
+\$ echo "This is feature three." \>\> feature3.txt
+\$ git add .
+\$ git ci -m "Initial version of feature three."
+[feature3 b105f18] Initial version of feature three.
+1 file changed, 1 insertion(+)
+create mode 100644 feature3.txt
+\$ echo "Do some work on feature three." \>\> feature3.txt
+\$ git add .
+\$ git ci -m "some work on feature three."
+[feature3 92547b3] some work on feature three.
+1 file changed, 1 insertion(+)
+\$ echo "Do some work on feature three." \>\> feature3.txt
+\$ git add .
+\$ git ci -m "some work on feature three."
+[feature3 f6826f1] some work on feature three.
+1 file changed, 1 insertion(+)
+Now the work on feature three is done, we can merge the work back to the
+master branch. And as the work on feature three has been finished, wecan now delete the feature3 branch:
+
+\$ git co master
+Switched to branch 'master'
+\$ git merge feature3 -m "Merge feature3 to master branch."
+Updating 77a34b4..f6826f1
+Fast-forward (no commit created; -m option ignored)
+feature3.txt | 3 +++
+1 file changed, 3 insertions(+)
+create mode 100644 feature3.txt
+\$ git lg
+\* f6826f1 2014-07-01 some work on feature three. (HEAD, master,feature3) \<Shumin Guo\>
+\* 92547b3 2014-07-01 some work on feature three. \<Shumin Guo\>
+\* b105f18 2014-07-01 Initial version of feature three. \<Shumin Guo\>
+\* 77a34b4 2014-07-01 Merge branch 'master' into feature1 \<Shumin Guo\>
+|\\
+| \* 5e53aa9 2014-07-01 Merge branch feature2. \<Shumin Guo\>
+| |\\
+| | \* f5ef113 2014-07-01 some work on feature two. \<Shumin Guo\>
+| | \* e3bf06c 2014-07-01 some work on feature two. \<Shumin Guo\>
+| | \* 1a31c3a 2014-07-01 Initial version of feature two. \<Shumin Guo\>
+\* | | b328e21 2014-07-01 some work on feature one. \<Shumin Guo\>
+|/ /
+\* | 5c9aea0 2014-07-01 some work on feature one. \<Shumin Guo\>
+\* | 307be3c 2014-07-01 some work on feature one. \<Shumin Guo\>
+\* | 276d3ab 2014-07-01 Initial version of feature one. \<Shumin Guo\>
+|/
+\* ef5556c 2014-07-01 Initial version of the project. \<Shumin Guo\>
+\$ git br -d feature3
+Deleted branch feature3 (was f6826f1).
+
+Now, after some hard work on the project, we plan to release the first
+version. So now we need a tag for this versioning decision. But before
+putting the project into production, we still need to do a lot of test
+including the UAT, Unit and Integration test etc. So, we will name it
+version v1.0-alpha:
+
+\$ git tag v1.0-alpha
+Now, let’s create a branch called UAT and start the testing. In case of
+errors along the way, we need to create hotfix branches to fix the
+problems:
+
+\$ git br hotfix\#001
+\$ git co hotfix\#001
+Switched to branch 'hotfix\#001'
+\$ echo "fixing problem 1" \>\> fix001.txt
+\$ git add .
+\$ git ci -m "Fixing bug\#001."
+[hotfix\#001 c2e4f10] Fixing bug\#001.
+1 file changed, 1 insertion(+)
+create mode 100644 fix001.txt
+\$ git br hotfix\#002
+\$ git co UAT
+Switched to branch 'UAT'
+\$ git co hotfix\#002
+Switched to branch 'hotfix\#002'
+\$ echo "fixing problem 2" \>\> fix002.txt
+\$ git add .
+\$ git ci -m "Fixing bug\#002."
+[hotfix\#002 ff47e06] Fixing bug\#002.
+1 file changed, 1 insertion(+)
+create mode 100644 fix002.txt
+Now the hotfixes are done, we merge them back to the UAT and then fromUAT merge back to the master branch:
+\$ git co UAT
+Switched to branch 'UAT'
+\$ git merge hotfix\#001
+Updating f6826f1..c2e4f10
+Fast-forward
+
+fix001.txt | 1 +
+1 file changed, 1 insertion(+)
+create mode 100644 fix001.txt
+\$ git merge hotfix\#002
+Updating c2e4f10..ff47e06
+Fast-forward
+fix002.txt | 1 +
+1 file changed, 1 insertion(+)
+create mode 100644 fix002.txt
+\$ git br -d hotfix\#002
+Deleted branch hotfix\#002 (was ff47e06).
+\$ git br -d hotfix\#001
+Deleted branch hotfix\#001 (was c2e4f10).
+\$ git co master
+Switched to branch 'master'
+\$ git merge UAT
+Updating f6826f1..ff47e06
+Fast-forward
+fix001.txt | 1 +
+fix002.txt | 1 +
+2 files changed, 2 insertions(+)
+create mode 100644 fix001.txt
+create mode 100644 fix002.txt
+\$ git lg
+
+\* ff47e06 2014-07-01 Fixing bug\#002. (HEAD, master, UAT) \<ShuminGuo\>
+\* c2e4f10 2014-07-01 Fixing bug\#001. \<Shumin Guo\>
+\* f6826f1 2014-07-01 some work on feature three. (tag: v1.0-alpha)
+\<Shumin Guo\>
+\* 92547b3 2014-07-01 some work on feature three. \<Shumin Guo\>
+\* b105f18 2014-07-01 Initial version of feature three. \<Shumin Guo\>
+\* 77a34b4 2014-07-01 Merge branch 'master' into feature1 \<Shumin Guo\>
+|\\
+| \* 5e53aa9 2014-07-01 Merge branch feature2. \<Shumin Guo\>
+| |\\
+| | \* f5ef113 2014-07-01 some work on feature two. \<Shumin Guo\>
+| | \* e3bf06c 2014-07-01 some work on feature two. \<Shumin Guo\>
+| | \* 1a31c3a 2014-07-01 Initial version of feature two. \<Shumin Guo\>
+\* | | b328e21 2014-07-01 some work on feature one. \<Shumin Guo\>
+|/ /
+\* | 5c9aea0 2014-07-01 some work on feature one. \<Shumin Guo\>
+\* | 307be3c 2014-07-01 some work on feature one. \<Shumin Guo\>
+\* | 276d3ab 2014-07-01 Initial version of feature one. \<Shumin Guo\>
+|/
+\* ef5556c 2014-07-01 Initial version of the project. \<Shumin Guo\>
+  As there is no ramification on the UAT and hotfix branches, the actual merges are fast forwarded. In reality, the branching structure can be much more complicated than this.
+Now, assume we have passed all the UAT tests, we want to put the projectinto production and by doing so, the production maintenance can also
+find bugs, in such cases, we should have similar action (hotfixes) as inthe UAT stage:
+
+\$ git br production
+\$ git co UAT
+Switched to branch 'UAT'
+\$ git co production
+Switched to branch 'production'
+\$ git br hotfix\#001
+\$ echo "fixing problem 1" \>\> fix001.prod.txt
+\$ git add .
+\$ git ci -m "Fixing bug\#001 in production."
+[hotfix\#001 cb266bc] Fixing bug\#001 in production.
+1 file changed, 1 insertion(+)
+create mode 100644 fix001.prod.txt
+\$ git co production
+Switched to branch 'production'
+\$ git merge hotfix\#001
+Updating ff47e06..cb266bc
+Fast-forward
+fix001.prod.txt | 1 +
+1 file changed, 1 insertion(+)
+create mode 100644 fix001.prod.txt
+\$ git co master
+Switched to branch 'master'
+\$ git merge production
+Updating ff47e06..cb266bc
+Fast-forward
+fix001.prod.txt | 1 +
+1 file changed, 1 insertion(+)
+create mode 100644 fix001.prod.txt
+\$ git br -d hotfix\#001
+Deleted branch hotfix\#001 (was cb266bc).
+\$ git lg
+\* cb266bc 2014-07-01 Fixing bug\#001 in production. (HEAD, production,
+master) \<Shumin Guo\>
+\* ff47e06 2014-07-01 Fixing bug\#002. (UAT) \<Shumin Guo\>
+\* c2e4f10 2014-07-01 Fixing bug\#001. \<Shumin Guo\>
+\* f6826f1 2014-07-01 some work on feature three. (tag: v1.0-alpha)\<Shumin Guo\>
+\* 92547b3 2014-07-01 some work on feature three. \<Shumin Guo\>
+\* b105f18 2014-07-01 Initial version of feature three. \<Shumin Guo\>
+\* 77a34b4 2014-07-01 Merge branch 'master' into feature1 \<Shumin Guo\>
+|\\
+| \* 5e53aa9 2014-07-01 Merge branch feature2. \<Shumin Guo\>
+| |\\
+| | \* f5ef113 2014-07-01 some work on feature two. \<Shumin Guo\>
+| | \* e3bf06c 2014-07-01 some work on feature two. \<Shumin Guo\>
+| | \* 1a31c3a 2014-07-01 Initial version of feature two. \<Shumin Guo\>
+\* | | b328e21 2014-07-01 some work on feature one. \<Shumin Guo\>
+|/ /
+\* | 5c9aea0 2014-07-01 some work on feature one. \<Shumin Guo\>
+\* | 307be3c 2014-07-01 some work on feature one. \<Shumin Guo\>
+\* | 276d3ab 2014-07-01 Initial version of feature one. \<Shumin Guo\>
+|/
+\* ef5556c 2014-07-01 Initial version of the project. \<Shumin Guo\>
+
+Till now, our project life cycle is done. We want to do some cleaning
+work on our commit history to make it cleaner before we share the
+project repo with other people. In this case, we can use the git rebase
+command to squash the commit history to make it cleaner:
+
+\$ git rebase -i b105f18
+![](media/image5.png)
+
+Figure 5 Use rebase to squash commits
+
+We can use the commands to change the operations on each specific
+commit. And after this window, we will be asked to change the commit
+messages in the next window.
+
+Now, let’s share our work with gitlab.
+
+\$ git remote add gitlab git@192.168.83.179:sguo/gitflow.git
+\$ git remote -v
+gitlab git@192.168.83.179:sguo/gitflow.git (fetch)
+gitlab git@192.168.83.179:sguo/gitflow.git (push)
+\$ git push -u gitlab master
+Counting objects: 45, done.
+Delta compression using up to 2 threads.
+Compressing objects: 100% (38/38), done.
+Writing objects: 100% (45/45), 3.94 KiB | 0 bytes/s, done.
+Total 45 (delta 15), reused 0 (delta 0)
+To git@192.168.83.179:sguo/gitflow.git
+\* [new branch] master -\> master
+Branch master set up to track remote branch master from gitlab.
+\$ git push -u gitlab production
+Counting objects: 3, done.
+Delta compression using up to 2 threads.
+Compressing objects: 100% (3/3), done.
+Writing objects: 100% (3/3), 436 bytes | 0 bytes/s, done.
+Total 3 (delta 1), reused 0 (delta 0)
+To git@192.168.83.179:sguo/gitflow.git
+\* [new branch] production -\> production
+Branch production set up to track remote branch production from gitlab.
+Finally we can look at the branching graph in gitlab:
+![](media/image6.png)
+Figure 6 The best practice git work flow
+
+### Git workflow for a one developer project
+
+For this software development situation, the central repository becomes
+a pure backup of the local repositories. The developer can work on
+trunk; fork branches for different features and/or bug fixes. And after
+the work is done, merge all the branches back to the trunk. So, let’s
+get started from the beginning for a step to step development scenario.
+
+\$ mkdir proj1
+\$ cd proj1
+\$ git init
+Initialized empty Git repository in /home/sguo/gitwork/proj1/.git/
+\$ echo “First git demo project.” \>\> README
+\$ git status
+On branch master
+Initial commit
+Untracked files:
+(use "git add \<file\>..." to include in what will be committed)
+README
+
+nothing added to commit but untracked files present (use "git add" to
+track)
+
+So far, we have created a demo project with a README file and asked git
+to track the project. But the README file is still in untracked state.
+We need to track (put it into stage state) it and commit it to our git
+repository.
+
+\$ git add README
+\$ git commit -m “Added README for project.”
+[master (root-commit) be3837d] Added README for project.
+1 file changed, 1 insertion(+)
+create mode 100644 README
+
+After committing the changes, we can take a look at the log using the
+alias lg.
+
+\$ git lg
+\* be3837d 2014-06-20 Added README for project. (HEAD, master)\<Shumin\>
+Now, let’s add one source code file trunk.txt, to show the trunk.
+\$ echo “this is trunk” \>\> trunk.txt
+\$ git add .
+\$ git commit -m “Added file trunk.txt”
+[master 4e93d6e] Added file trunk.txt
+1 file changed, 1 insertion(+)
+create mode 100644 trunk.txt
+\$ git lg
+\* 4e93d6e 2014-06-20 Added file trunk.txt (HEAD, master) \<Shumin\>
+\* be3837d 2014-06-20 Added README for project. \<Shumin\>
+Now, let’s create a tag to version the trunk branch.
+\$ git tag v0.1
+\$ git lg
+\* 4e93d6e 2014-06-20 Added file trunk.txt (HEAD, tag: v0.1, master)
+\<Shumin\>
+\* be3837d 2014-06-20 Added README for project. \<Shumin\>
+Now, let’s create a branch branch1. Branching is a good choice foradding new features and fixing bugs etc.
+
+\$ git br branch1
+\$ git br
+branch1
+\* master
+We have two branches in our repository now. The master branch is the so
+called trunk of our version tree. And the branch1 is used to add a new
+feature for the software.
+
+\$ git co branch1
+\$ git br
+\* branch1
+master
+\$ echo “this is branch1” \>\> branch1.txt
+\$ git add .
+\$ git ci -m "Added file branch1.txt"
+[branch1 ec0d62f] Added file branch1.txt
+1 file changed, 1 insertion(+)
+create mode 100644 branch1.txt
+\$ git lg
+\* ec0d62f 2014-06-20 Added file branch1.txt (HEAD, branch1) \<Shumin\>
+\* 4e93d6e 2014-06-20 Added file trunk.txt (tag: v0.1, master)\<Shumin\>
+\* be3837d 2014-06-20 Added README for project. \<Shumin\>
+
+Assume while are working on the new feature, we need to edit something
+that is not relevant to this feature but only related to the trunk. We
+can do the following:
+
+\$ git co master
+\$ echo “added something to trunk” \>\> trunk.txt
+\$ git add .
+\$ git commit -m “change trunk.”
+\$ git co branch1
+\$ echo “change feature one” \>\> branch1.txt
+\$ git diff
+diff --git a/branch1.txt b/branch1.txt
+index f3c83ca..9cda351 100644
+--- a/branch1.txt
++++ b/branch1.txt
+@@ -1 +1,2 @@
+this is branch1
++change feature one
+\$ git add .
+\$ git commit -m “change feature one.”
+\$ git lg master
+\* 048d91a 2014-06-20 change trunk. (master) \<Shumin\>
+\* 4e93d6e 2014-06-20 Added file trunk.txt (tag: v0.1) \<Shumin\>
+\* be3837d 2014-06-20 Added README for project. \<Shumin\>
+\$ git lg branch1
+\* 48ec4d5 2014-06-20 change feature one. (HEAD, branch1) \<Shumin\>
+\* ec0d62f 2014-06-20 Added file branch1.txt \<Shumin\>
+\* 4e93d6e 2014-06-20 Added file trunk.txt (tag: v0.1) \<Shumin\>
+\* be3837d 2014-06-20 Added README for project. \<Shumin\>
+
+Now, the two branches master and branch1 has diverged (from root
+4e93d6e). If till now, we have finished the coding for feature one. We
+want to merge the code for feature one back into the trunk so that we
+can get a new release.
+
+\$ git co master
+\$ git diff branch1
+diff --git a/branch1.txt b/branch1.txt
+deleted file mode 100644
+index 9cda351..0000000
+--- a/branch1.txt
++++ /dev/null
+@@ -1,2 +0,0 @@
+-this is branch1
+-change feature one
+diff --git a/trunk.txt b/trunk.txt
+index 99b6179..b1bbb7a 100644
+--- a/trunk.txt
++++ b/trunk.txt
+@@ -1 +1,2 @@
+“this is trunk”
++added something to trunk
+\$ git merge branch1 -m "Merge 'branch1' to master."
+Merge made by the 'recursive' strategy.
+branch1.txt | 2 ++
+1 file changed, 2 insertions(+)
+create mode 100644 branch1.txt
+\$ git tag v0.2
+\$ git lg
+\* 5079f3e 2014-06-20 Merge 'branch1' to master. (HEAD, tag: v0.2,
+master) \<Shumin\>
+|\\
+| \* 48ec4d5 2014-06-20 change feature one. (branch1) \<Shumin\>
+| \* ec0d62f 2014-06-20 Added file branch1.txt \<Shumin\>
+\* | 048d91a 2014-06-20 change trunk. \<Shumin\>
+|/
+\* 4e93d6e 2014-06-20 Added file trunk.txt (tag: v0.1) \<Shumin\>
+\* be3837d 2014-06-20 Added README for project. \<Shumin\>
+Till now, the branch branch1 has finished its mission, we can delete it.
+\$ git br
+branch1
+\* master
+\$ git br -d branch1
+Deleted branch branch1 (was 48ec4d5).
+\$ git br
+\* master
+In the end, you might want to put your repository to a dedicated serverusing ssh. First, you need to create an empty directory on the remote
+machine.
+\$ mkdir proj1.remote
+\$ cd proj1.remote
+\$ git init
+Then, go back to the local machine and add the remote repository to your
+local repo.
+\$ git remote add proj1.repossh://sguo@\<machine-remote\>/home/sguo/gitwork/proj1.remote
+\$ git remote -v
+proj1.repo ssh://sguo@\<machine-remote\>/home/sguo/gitwork/proj1.remote
+(fetch)
+proj1.repo ssh://sguo@\<machine-remote\>/home/sguo/gitwork/proj1.remote(push)
+\$ git push proj1.repo master
+Counting objects: 17, done.
+Delta compression using up to 2 threads.
+
+Compressing objects: 100% (11/11), done.
+Writing objects: 100% (17/17), 1.67 KiB | 0 bytes/s, done.
+Total 17 (delta 2), reused 0 (delta 0)
+To ssh://sguo@localhost/home/sguo/gitwork/proj1.remote
+\* [new branch] master -\> master
+\$ git lg
+\* 5079f3e 2014-06-20 Merge 'branch1' to master. (HEAD, tag: v0.2,
+proj1.repo/master, master) \<Shumin\>
+|\\
+| \* 48ec4d5 2014-06-20 change feature one. \<Shumin\>
+| \* ec0d62f 2014-06-20 Added file branch1.txt \<Shumin\>
+\* | 048d91a 2014-06-20 change trunk. \<Shumin\>
+|/
+\* 4e93d6e 2014-06-20 Added file trunk.txt (tag: v0.1) \<Shumin\>
+\* be3837d 2014-06-20 Added README for project. \<Shumin\>
+Note: if you didn’t configure password-less login to the remote machine,
+you will be prompted to enter password for your account on that machine
+when you run the push command.
+
+When you run the push command, only the master branch is pushed to the
+remote server. If, in some cases, you want to push branches other than
+master automatically to the remote repo, you need to configure hook. We
+will cover this topic later.
+
+Currently, the local repository and remote repository are in sync as
+shown by the git lg command. But when you work and commit locally, the
+references might be ahead of the remote repo. In such cases, we need to
+run the push command regularly to make sure all the commits are backed
+up on the remote server.
+
+\$ echo “added something to trunk” \>\> trunk.txt
+\$ git add .
+\$ git commit “edited trunk.”
+\$ git diff master proj1.repo/master
+diff --git a/trunk.txt b/trunk.txt
+index f3e3483..b1bbb7a 100644
+--- a/trunk.txt
++++ b/trunk.txt
+@@ -1,3 +1,2 @@
+“this is trunk”
+added something to trunk
+-added something to trunk
+\$ git lg
+\* 9cff6ef 2014-06-20 edited trunk. (HEAD, master) \<Shumin\>
+\* 5079f3e 2014-06-20 Merge 'branch1' to master. (tag: v0.2,proj1.repo/master) \<Shumin\>
+|\\
+| \* 48ec4d5 2014-06-20 change feature one. \<Shumin\>
+| \* ec0d62f 2014-06-20 Added file branch1.txt \<Shumin\>
+\* | 048d91a 2014-06-20 change trunk. \<Shumin\>
+|/
+\* 4e93d6e 2014-06-20 Added file trunk.txt (tag: v0.1) \<Shumin\>
+\* be3837d 2014-06-20 Added README for project. \<Shumin\>
+Now, suppose after a few months of hard working on the project, we plan
+to make an alpha release. We can easily do this with the help oftagging.
+
+\$ git tag r1.0-alpha
+\$ git tag
+r1.0-alpha
+### Git workflow for projects with multiple developers 
+
+Git will shine for multiple development teams when all the commits are
+properly governed and operated. This scenario based section will show
+you how to coordinate the collaboration among multiple developers using
+git.
+
+Assume we have 3 developers and one project manager/coordinator in the
+development team. We use Figure 7 to show the relationship of these
+
+Example Infrastructure of a development team
+
+In order to show the differences, we used different colors to represent
+different developers. For example, red for Steve, green for Sam, blue
+for Mike and **black** for Tony. In this team, the project coordinator
+Tony will be responsible for coordinating the commits, branches and
+tags.
+
+To make the illustration simple and straightforward, I will use the echo
+command to make changes to the source code files. And use command
+aliases as much as can, more information about these command aliases can
+be found at Section 7.1. So, let’s get started.
+
+The first step is for the project manager and coordinator to initialize
+the project and push it to the central repository. I will use different
+text colors to represent different people from now on, unless commented
+otherwise. And for illustration purposes, I will use one machine but
+with multiple directories to represent different users.
+
+\$ ssh tony@repo-server
+\$ mkdir proj1.git
+\$ cd proj1.git
+\$ git init --bare
+Initialized empty Git repository in /home/sguo/gitdemo/proj1.git/
+\$ exit
+\$ mkdir proj1.tony
+\$ cd proj1.tony
+\$ echo “This is project one.” \>\> README
+\$ git add .
+\$ git commit -m “Initial version of proj1.”
+[master (root-commit) 55b5fc2] Initial version of proj1.
+1 file changed, 1 insertion(+)
+create mode 100644 README
+\$ git remote add proj1.repo
+ssh:sguo@localhost:/home/sguo/gitdemo/proj1.git
+\$ git remote -v
+proj1.repo ssh://sguo@localhost:/home/sguo/gitdemo/proj1.git (fetch)
+proj1.repo ssh://sguo@localhost:/home/sguo/gitdemo/proj1.git (push)
+\$ git push -u proj1.repo master
+sguo@localhost's password:
+Counting objects: 3, done.
+Writing objects: 100% (3/3), 242 bytes | 0 bytes/s, done.
+Total 3 (delta 0), reused 0 (delta 0)
+To ssh://sguo@localhost:/home/sguo/gitdemo/proj1.git
+\* [new branch] master -\> master
+Branch master set up to track remote branch master from proj1.repo.
+\$ git lg
+\* 55b5fc2 2014-06-27 Initial version of proj1. (HEAD,
+proj1.repo/master, master) \<Shumin Guo\>
+Then, all the three developers will clone the project from therepository.
+\$ git clone ssh://sguo@localhost:/home/sguo/gitdemo/proj1.git
+proj1.steve Cloning into 'proj1.steve'...
+remote: Counting objects: 3, done.
+remote: Total 3 (delta 0), reused 0 (delta 0)
+Receiving objects: 100% (3/3), 242 bytes | 0 bytes/s, done.
+Checking connectivity... done.
+\$ git clone ssh://sguo@localhost:/home/sguo/gitdemo/proj1.git proj1.sam
+Cloning into 'proj1.sam'...
+remote: Counting objects: 3, done.
+remote: Total 3 (delta 0), reused 0 (delta 0)
+Receiving objects: 100% (3/3), 242 bytes | 0 bytes/s, done.
+Checking connectivity... done.
+\$ git clone ssh://sguo@localhost:/home/sguo/gitdemo/proj1.gitproj1.mike
+Cloning into 'proj1.mike'...
+remote: Counting objects: 3, done.
+remote: Total 3 (delta 0), reused 0 (delta 0)
+Receiving objects: 100% (3/3), 242 bytes | 0 bytes/s, done.
+Checking connectivity... done.
+
+Assume this project has three main parts: the frontend, middleware and
+the backend. So, the project manager wants each of the developers to
+work on separate parts, but he doesn’t want to mess everything together.
+The best option the project coordinate can do is to let different users
+work on their own branch then merge them into the final release.
+
+**Steve:**
+
+\$ git br
+\* master
+\$ git br
+\* master
+steve
+\$ git co steve
+Switched to branch 'steve'
+\$ git br
+master
+\* steve
+\$ echo "This is frontend." \>\> frontend.txt
+\$ echo "frontend work." \>\> frontend.txt
+\$ git add frontend.txt
+\$ git commit -m "Initial version of frontend. "
+[steve f049020] Initial version of frontend.
+1 file changed, 2 insertions(+)
+create mode 100644 frontend.txt
+\$ echo "frontend work." \>\> frontend.txt
+\$ git add frontend.txt
+\$ git commit -m "some work."
+[steve 2e60e99] some work.
+1 file changed, 1 insertion(+)
+\$ git lg
+\* 2e60e99 2014-06-27 some work. (HEAD, steve) \<Shumin Guo\>
+\* f049020 2014-06-27 Initial version of frontend. \<Shumin Guo\>
+\* 55b5fc2 2014-06-27 Initial version of proj1. (origin/master,origin/HEAD, master) \<Shumin Guo\>
+**Sam**:
+\$ git br
+\* master
+\$ git br sam
+\$ git co sam
+Switched to branch 'sam'
+\$ git br
+Master
+\* sam
+\$ echo "This is middleware." \>\> middleware.txt
+\$ git add .
+\$ git ci -m "Initial version for middleware."
+[sam 376dc71] Initial version for middleware.
+1 file changed, 1 insertion(+)
+create mode 100644 middleware.txt
+\$ echo "some work" \>\> middleware.txt
+\$ git add .
+\$ git commit -m "work on middleware."
+[sam 88f0872] work on middleware.
+1 file changed, 1 insertion(+)
+\$ git lg
+\* 88f0872 2014-06-27 work on middleware. (HEAD, sam) \<Shumin Guo\>
+\* 376dc71 2014-06-27 Initial version for middleware. \<Shumin Guo\>
+\* 55b5fc2 2014-06-27 Initial version of proj1. (origin/master,
+origin/HEAD, master) \<Shumin Guo\>
+**Mike: **
+
+\$ git br
+\* master
+\$ git br mike
+\$ git co mike
+Switched to branch 'mike'
+\$ echo "this is backend" \>\> backend.txt
+\$ git add .
+\$ git commit -m "Initial version of backend. "
+
+[mike 794c9e1] Initial version of backend.
+1 file changed, 1 insertion(+)
+
+create mode 100644 backend.txt
+
+\$ echo "some work" \>\> backend.txt
+\$ git add .
+\$ git commit -m "work on backend."
+[mike 35552e3] work on backend.
+1 file changed, 1 insertion(+)
+\$ git lg
+\* 35552e3 2014-06-27 work on backend. (HEAD, mike) \<Shumin Guo\>
+\* 794c9e1 2014-06-27 Initial version of backend. \<Shumin Guo\>
+\* 55b5fc2 2014-06-27 Initial version of proj1. (origin/master,
+origin/HEAD, master) \<Shumin Guo\>
+
+Now, we assume that the three developers think that their work should be
+joined to make a release. With git, we basically have two choices of
+using the sharing the work: pull and push.
+
+If the **pull** method is used, the program manager will need to know
+the repository address of all three developers, and pull their work to
+his repository, do some work and then share it over the central
+repository. This method has obvious drawback in that the coordinator
+needs to know every developer’s repository address in order to work.
+
+If the **push** method is used, each software developer will push their
+work to the central repository server. And the coordinator then
+fetches/pulls the updates from the central server. Merge the branches
+and then push it back, so that all the developers can get the merged
+project to their local repository. The following graph shows the flow of
+the collaboration:
+
+Figure 8 Collaboration flow diagram
+
+\$ git push origin steve
+Counting objects: 6, done.
+Delta compression using up to 2 threads.
+Compressing objects: 100% (4/4), done.
+Writing objects: 100% (6/6), 589 bytes | 0 bytes/s, done.
+Total 6 (delta 0), reused 0 (delta 0)
+To ssh://sguo@localhost:/home/sguo/gitdemo/proj1.git
+\* [new branch] steve -\> steve
+\$ git push origin sam
+Counting objects: 6, done.
+Delta compression using up to 2 threads.
+Compressing objects: 100% (4/4), done.
+Writing objects: 100% (6/6), 605 bytes | 0 bytes/s, done.
+Total 6 (delta 0), reused 0 (delta 0)
+To ssh://sguo@localhost:/home/sguo/gitdemo/proj1.git
+\* [new branch] sam -\> sam
+\$ git push origin mike
+Counting objects: 6, done.
+Delta compression using up to 2 threads.
+Compressing objects: 100% (4/4), done.
+Writing objects: 100% (6/6), 582 bytes | 0 bytes/s, done.
+Total 6 (delta 0), reused 0 (delta 0)
+To ssh://sguo@localhost:/home/sguo/gitdemo/proj1.git
+\* [new branch] mike -\> mike
+\$ git br steve
+\$ git br sam
+\$ git br mike
+\$ git br
+\* master
+mike
+sam
+steve
+**\$ git pull proj1.repo steve**
+From ssh://localhost:/home/sguo/gitdemo/proj1
+\* branch steve -\> FETCH\_HEAD
+Updating 55b5fc2..2e60e99
+Fast-forward
+frontend.txt | 3 +++
+1 file changed, 3 insertions(+)
+create mode 100644 frontend.txt
+**\$ git co sam**
+Switched to branch 'sam'
+\$ git pull proj1.repo sam
+From ssh://localhost:/home/sguo/gitdemo/proj1
+\* branch sam -\> FETCH\_HEAD
+Updating 55b5fc2..88f0872
+Fast-forward
+middleware.txt | 2 ++
+1 file changed, 2 insertions(+)
+create mode 100644 middleware.txt
+**\$ git co mike**
+Switched to branch 'mike'
+\$ git pull proj1.repo mike
+remote: Counting objects: 6, done.
+remote: Compressing objects: 100% (4/4), done.
+remote: Total 6 (delta 0), reused 0 (delta 0)
+Unpacking objects: 100% (6/6), done.
+From ssh://localhost:/home/sguo/gitdemo/proj1
+\* branch mike -\> FETCH\_HEAD
+\* [new branch] mike -\> proj1.repo/mike
+Updating 55b5fc2..35552e3
+Fast-forward
+backend.txt | 2 ++
+1 file changed, 2 insertions(+)
+create mode 100644 backend.txt
+
+Now, on Tony’s local directory, he has all the branches for the three
+developers, he want to merge their work into release-1.0-alpha. For
+example, he wants to merge all three branches into the master branch.
+
+**\$ git co master**
+
+Switched to branch 'master'
+
+Your branch is up-to-date with 'proj1.repo/master'.
+
+**\$ git merge steve**
+
+Updating 55b5fc2..2e60e99
+
+Fast-forward
+
+frontend.txt | 3 +++
+
+1 file changed, 3 insertions(+)
+
+create mode 100644 frontend.txt
+
+**\$ git merge sam**
+
+Merge made by the 'recursive' strategy.
+
+middleware.txt | 2 ++
+
+1 file changed, 2 insertions(+)
+
+create mode 100644 middleware.txt
+
+**\$ git lg**
+
+\* 7142cdf 2014-06-27 Merge branch 'sam' (HEAD, master) \<Shumin Guo\>
+
+|\\
+
+| \* 88f0872 2014-06-27 work on middleware. (proj1.repo/sam, sam)
+\<Shumin Guo\>
+
+| \* 376dc71 2014-06-27 Initial version for middleware. \<Shumin Guo\>
+
+\* | 2e60e99 2014-06-27 some work. (proj1.repo/steve, steve) \<Shumin
+Guo\>
+
+\* | f049020 2014-06-27 Initial version of frontend. \<Shumin Guo\>
+
+|/
+
+\* 55b5fc2 2014-06-27 Initial version of proj1. (proj1.repo/master)
+\<Shumin Guo\>
+
+**\$ git merge mike**
+
+Merge made by the 'recursive' strategy.
+
+backend.txt | 2 ++
+
+1 file changed, 2 insertions(+)
+
+create mode 100644 backend.txt
+
+**\$ git tag release-1.0-alpha**
+
+**\$ git lg**
+
+\* 69faafa 2014-06-27 Merge branch 'mike' (HEAD, tag: release-1.0-alpha,
+master) \<Shumin Guo\>
+
+|\\
+
+| \* 35552e3 2014-06-27 work on backend. (proj1.repo/mike, mike)
+\<Shumin Guo\>
+
+| \* 794c9e1 2014-06-27 Initial version of backend. \<Shumin Guo\>
+
+\* | 7142cdf 2014-06-27 Merge branch 'sam' \<Shumin Guo\>
+
+|\\ \\
+
+| \* | 88f0872 2014-06-27 work on middleware. (proj1.repo/sam, sam)
+\<Shumin Guo\>
+
+| \* | 376dc71 2014-06-27 Initial version for middleware. \<Shumin Guo\>
+
+| |/
+
+\* | 2e60e99 2014-06-27 some work. (proj1.repo/steve, steve) \<Shumin
+Guo\>
+
+\* | f049020 2014-06-27 Initial version of frontend. \<Shumin Guo\>
+
+|/
+
+\* 55b5fc2 2014-06-27 Initial version of proj1. (proj1.repo/master)
+\<Shumin Guo\>
+
+**\$ git push proj1.repo master**
+
+Counting objects: 4, done.
+
+Delta compression using up to 2 threads.
+
+Compressing objects: 100% (4/4), done.
+
+Writing objects: 100% (4/4), 580 bytes | 0 bytes/s, done.
+
+Total 4 (delta 1), reused 0 (delta 0)
+
+To ssh://sguo@localhost:/home/sguo/gitdemo/proj1.git
+
+55b5fc2..69faafa master -\> master
+
+**\$ git push proj1.repo master --tags**
+
+Total 0 (delta 0), reused 0 (delta 0)
+
+To ssh://sguo@localhost:/home/sguo/gitdemo/proj1.git
+
+\* [new tag] release-1.0-alpha -\> release-1.0-alpha
+
+Now, it is time for the developers to fetch/pull from the central repo.
+
+**Steve**:
+
+\$ ls
+
+frontend.txt README
+
+\$ git br
+
+master
+
+\* steve
+
+\$ git co master
+
+Switched to branch 'master'
+
+Your branch is up-to-date with 'origin/master'.
+
+\$ git pull origin master
+
+remote: Counting objects: 16, done.
+
+remote: Compressing objects: 100% (12/12), done.
+
+remote: Total 16 (delta 4), reused 0 (delta 0)
+
+Unpacking objects: 100% (16/16), done.
+
+From ssh://localhost:/home/sguo/gitdemo/proj1
+
+\* branch master -\> FETCH\_HEAD
+
+55b5fc2..69faafa master -\> origin/master
+
+Updating 55b5fc2..69faafa
+
+Fast-forward
+
+backend.txt | 2 ++
+
+frontend.txt | 3 +++
+
+middleware.txt | 2 ++
+
+3 files changed, 7 insertions(+)
+
+create mode 100644 backend.txt
+
+create mode 100644 frontend.txt
+
+create mode 100644 middleware.txt
+
+\$ ls
+
+backend.txt frontend.txt middleware.txt README
+
+**Sam**:
+
+\$ ls
+
+middleware.txt README
+
+\$ git br
+
+master
+
+\* sam
+
+\$ git co master
+
+Switched to branch 'master'
+
+Your branch is up-to-date with 'origin/master'.
+
+\$ git pull origin master
+
+remote: Counting objects: 16, done.
+
+remote: Compressing objects: 100% (12/12), done.
+
+remote: Total 16 (delta 4), reused 0 (delta 0)
+
+Unpacking objects: 100% (16/16), done.
+
+From ssh://localhost:/home/sguo/gitdemo/proj1
+
+\* branch master -\> FETCH\_HEAD
+
+55b5fc2..69faafa master -\> origin/master
+
+Updating 55b5fc2..69faafa
+
+Fast-forward
+
+backend.txt | 2 ++
+
+frontend.txt | 3 +++
+
+middleware.txt | 2 ++
+
+3 files changed, 7 insertions(+)
+
+create mode 100644 backend.txt
+
+create mode 100644 frontend.txt
+
+create mode 100644 middleware.txt
+
+\$ ls
+
+backend.txt frontend.txt middleware.txt README
+
+**Mike**:
+
+\$ ls
+
+backend.txt README
+
+\$ git br
+
+master
+
+\* mike
+
+\$ git co master
+
+Switched to branch 'master'
+
+Your branch is up-to-date with 'origin/master'.
+
+\$ git pull origin master
+
+remote: Counting objects: 16, done.
+
+remote: Compressing objects: 100% (12/12), done.
+
+remote: Total 16 (delta 4), reused 0 (delta 0)
+
+Unpacking objects: 100% (16/16), done.
+
+From ssh://localhost:/home/sguo/gitdemo/proj1
+
+\* branch master -\> FETCH\_HEAD
+
+55b5fc2..69faafa master -\> origin/master
+
+Updating 55b5fc2..69faafa
+
+Fast-forward
+
+backend.txt | 2 ++
+
+frontend.txt | 3 +++
+
+middleware.txt | 2 ++
+
+3 files changed, 7 insertions(+)
+
+create mode 100644 backend.txt
+
+create mode 100644 frontend.txt
+
+create mode 100644 middleware.txt
+
+\$ ls
+
+backend.txt frontend.txt middleware.txt README
+
+So far, all three developers has the merged work of all other developers
+on their master’s branch, but not enough, we are missing the release tag
+from tony. The following can be done to share the tags.
+
+**\$ git push proj1.repo master --tags**
+
+Total 0 (delta 0), reused 0 (delta 0)
+
+To ssh://sguo@localhost:/home/sguo/gitdemo/proj1.git
+
+\* [new tag] release-1.0-alpha -\> release-1.0-alpha
+
+\$ git pull origin master --tags
+
+From ssh://localhost:/home/sguo/gitdemo/proj1
+
+\* branch master -\> FETCH\_HEAD
+
+\* [new tag] release-1.0-alpha -\> release-1.0-alpha
+
+Already up-to-date.
+
+\$ git lg
+
+\* 69faafa 2014-06-27 Merge branch 'mike' (HEAD, tag: release-1.0-alpha,
+origin/master, origin/HEAD, master) \<Shumin Guo\>
+
+|\\
+
+| \* 35552e3 2014-06-27 work on backend. \<Shumin Guo\>
+
+| \* 794c9e1 2014-06-27 Initial version of backend. \<Shumin Guo\>
+
+\* | 7142cdf 2014-06-27 Merge branch 'sam' \<Shumin Guo\>
+
+|\\ \\
+
+| \* | 88f0872 2014-06-27 work on middleware. \<Shumin Guo\>
+
+| \* | 376dc71 2014-06-27 Initial version for middleware. \<Shumin Guo\>
+
+| |/
+
+\* | 2e60e99 2014-06-27 some work. (origin/steve, steve) \<Shumin Guo\>
+
+\* | f049020 2014-06-27 Initial version of frontend. \<Shumin Guo\>
+
+|/
+
+\* 55b5fc2 2014-06-27 Initial version of proj1. \<Shumin Guo\>
+
+## References
+
+-   [Git commit
+    visualization](http://kentnguyen.com/development/visualized-git-practices-for-team/)
+
+-   [Git branching model for efficient
+    development](http://www.slideshare.net/lemiorhan/git-branching-model)
+
+-   [Git for beginners: The definitive practical
+    guide](http://stackoverflow.com/questions/315911/git-for-beginners-the-definitive-practical-guide)
+
+-   [A successful Git branching
+    model](http://nvie.com/posts/a-successful-git-branching-model/)
+
+-   [Git best
+    practices](http://sethrobertson.github.io/GitBestPractices/#read)
+
+-   -   -   The pro git book about rebasing
+
+-   http://www.slideshare.net/lemiorhan/git-branching-model
+
+# Gitlab – the comprehensive UI for git
+
+Many people might have heard of github. It is becoming one of the most
+popular git hosting website for both open source and proprietary
+software development projects. The user interface of github makes git
+more attractive for developers. It also makes the collaboration of open
+source contributors much easier to work together on the same project.
+
+Gitlab is the open source version of github, although still have some
+differences in functionality. It gives us a perfect interface to work
+with git. In this section, we are learning how to use gitlab for project
+collaboration with git. First, we will tell you how to install gitlab.
+Next, we will show you how to use gitlab including project management,
+commit/branch/tag management and many others. Hope this can be an
+enjoyable experience.
+
+## Installing gitlab
+
+The installation of community version gitlab might need some hacking and
+trouble shooting. In case you got problems, consult Dr. google for help.
+
+If you want to install gitlab on Ubuntu, debian or centos (redhat
+compatible linux), the most helpful instruction might be at this link:
+<https://about.gitlab.com/downloads/>
+
+For example, I am installing on CentOS system, the following commands
+are needed to finish the installation.
+
+\$ wget https://downloads-packages.s3.amazonaws.com/centos-6.5/gitlab-7.0.0\_omnibus-1.el6.x86\_64.rpm
+
+\$ sudo yum install openssh-server
+
+\$ sudo yum install postfix
+
+\$ sudo rpm -i gitlab-7.0.0\_omnibus-1.el6.x86\_64.rpm
+
+\$ sudo gitlab-ctl reconfigure
+
+\$ sudo lokkit -s http -s ssh
+
+You might need to tune some of the configuration, according to my
+installation experience, the following files are the most important ones
+to consider:
+
+/etc/gitlab/gitlab.rb
+
+\${GITLAB\_HOME}/gitlab-shell/config.yml
+
+\${GITLAB\_HOME}/gitlab-rails/unicorn.rb
+
+And the most important parameter is change is the hostname/ip address
+and the port of the configuration files. For example, if the default
+port 80 has been used by other applications (most probability HTTP
+server), you need to change the port from 80 (gitlab default port) to
+something else. And after you make changes, please don’t forget to run
+the following command:
+
+\$ sudo gitlab-ctl reconfigure
+
+When the configuration completes, you can start the gitlab server with
+command:
+
+\$ sudo gitlab-ctl start
+
+\$ sudo gitlab-ctl status
+
+It is helpful to check the log messages when you had trouble with
+gitlab:
+
+\$ sudo gitlab-ctl tail
+
+## A gitlab tutorial 
+
+Based on my experience of testing gitlab is pretty straightforward to
+use. I will guide you through the steps of the following topics:
+
+-   Deploy keys
+
+-   Create a new project
+
+-   Explore the history of a hosted project
+
+-   Managing project issues and milestones
+
+-   Collaboration using merge requests
+
+-   Documentation using the wiki
+
+### Deploy keys 
+
+Gitlab will use ssh to authenticate a user, so a public key should be
+deployed. So, the first step is to create a public key if you don’t have
+one.
+
+\$ ssh-keygen
+
+Generating public/private rsa key pair.
+
+Enter file in which to save the key (/home/sguo/.ssh/id\_rsa):
+/home/sguo/.ssh/id\_rsa1
+
+Enter passphrase (empty for no passphrase):
+
+Enter same passphrase again:
+
+Your identification has been saved in /home/sguo/.ssh/id\_rsa.
+
+Your public key has been saved in /home/sguo/.ssh/id\_rsa.pub.
+
+The key fingerprint is:
+
+99:8d:e8:68:80:fd:77:54:d4:2d:d8:73:9f:31:86:5a sguo@oralab02
+
+The key's randomart image is:
+
++--[ RSA 2048]----+
+
+| .+ .. |
+
+| .. =Eo+ |
+
+| . o+..+|
+
+| o . \* . ..|
+
+|. o . S . |
+
+| o o . |
+
+| + o . |
+
+| . . . |
+
+| |
+
++-----------------+
+
+\$ ls \~/.ssh/
+
+authorized\_keys id\_rsa id\_rsa1 id\_rsa1.pub id\_rsa.pub known\_hosts
+
+\$ cat \~/.ssh/id\_rsa.pub
+
+ssh-rsa
+AAAAB3NzaC1yc2EAAAABIwAAAQEAx9kAJVUa6tZecBXJ2Dw/2WU8o12JLb/vjI2yrFsmzzBv326W6k4piBXDcUdrpa919WcKbLPdFHN1U0vyuz6xM0+Oc1ZUZZqpRhbw71kaIgnJGVRNrGGZiDcj4bIUKCZmG+SXlA7N/h7RmMtcappoIi99JH4PEVuN8WdsYOKDMdFp7uCL6z3GZ7Trd/qcpltqHgmsvMmx5HVUQptrTbM1RicAkP5g+RFV2rul6fYh2wCsiNm01sRra6UCCHB9TJvWan828Q7ZlfWxSQRu8TEW1BOIBL3veSqmP0cMEqO6iRmHAdIwOEFyv2BISWeU3BmFGOiJxmksaDspLabWJNu7Iw==
+sguo@oralab02
+
+The following two screenshots shows how to deploy public keys to gitlab.
+
+![](media/image9.png)
+
+Figure 9 Steps to add ssh keys
+
+![](media/image10.png)
+
+### Create a new project 
+
+You need to specify the project name, an optional description about the
+project and the visibility level.
+
+![](media/image11.png)
+
+Figure 10 Creating a new project
+
+### Explore the history of a hosted project 
+
+The project panel provides tabs to exploration the following features of
+a project: files, commits, network, graphs, issues, merge requests, wiki
+and settings.
+
+The files tab can let us view the contents of files
+
+![](media/image12.png)
+
+Figure 11 Files
+
+The commits tab provides sub tabs to let us explore individual commits,
+compare different commits, branches, tags and commit statistics.
+
+![](media/image13.png)
+
+Figure 12 Commits
+
+![](media/image14.png)
+
+Figure 13 Compare different commits
+
+![](media/image15.png)
+
+Figure 14 Branches
+
+![](media/image16.png)
+
+Figure 15 Tags
+
+![](media/image17.png)
+
+Figure 16 Commit Statistics
+
+![](media/image18.png)
+
+Figure 17 Commit Visualization
+
+![](media/image19.png)
+
+Figure 18 Graphical display of commit statistics
+
+### Managing project issues and milestones
+
+![](media/image20.png)
+
+Figure 19 Manage Issues
+
+### Collaboration using merge requests
+
+![](media/image21.png)
+
+Figure 20 Creating merge request
+
+### Documentation using the wiki
+
+![](media/image22.png)
+
+Figure 21 Project Wiki via git
+
+## References
+
+-   [Git flow with Jenkins and
+    GitLab](http://juristr.com/blog/2014/01/git-flow-jenkins-gitlab/)

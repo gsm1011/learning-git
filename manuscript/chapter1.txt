@@ -1,3 +1,255 @@
 # Chapter 1
 
-Let's begin learning git.
+# Install and configure git
+
+This section outlines the tasks for git repository administrators or
+project managers. Topics will include initialization of a repository,
+security management, backup and recovery of versions etc. Git supports
+four network protocols for transferring data: Local, ssh, git and
+http(s).
+
+Pros and cons of access methods
+
+  **Access method**     **Pros**                                                 **Cons**
+  --------------------- -------------------------------------------------------- --------------------------------------------------------
+  Local (shared disk)   Simple, easy setup                                       Disk sharing is not easy and slow for remote access
+  SSH                   Easy setup and configure, secure                         Doesn’t support anonymous user access
+  Git                   Fast, good for serving read only project to the public   Not secure, not easy to setup,
+  Http/Https            Easy to setup and small load to the web server           Not efficient to transfer data using the HTTP protocol
+
+## Installing git
+
+Git can be installed either using package management software such as
+yum or install from source.
+
+After installation, we can use the git config command to change how git
+works. There are three files involved for this configuration.
+
+-   File /etc/gitconfig is the system scope git configuration file, all
+    changes in this file will be applied to each user and all their
+    repositories. In order to change this file using git config, you
+    need to pass option --system
+
+-   File \~/.gitconfig is the configuration file for specific user.
+    The --global option need to be passed to the git config command in
+    order to make changes to this file
+
+-   Repository level configuration resides in the root directory of the
+    repository with name .git/config, changes to this file will shadow
+    the configuration in either /etc/gitconfig or \~/.gitconfig
+
+## Creating a new repository 
+
+Creating a repository in git means initializes the repository structure.
+The init command is what we need for this.
+
+\$ git init
+
+Or
+
+\$ git init --bare
+
+Please note that these two commands simply create a .git directory under
+the current directory. No files have been added for tracking yet. If you
+run the git status command, you will get a list of untracked files. In
+order to add a file for git to track, we need to use the git add
+command.
+
+\$ git add \<filename\>
+
+The \<filename\> can either be a specific file name or a glob pattern of
+files using special characters such as \* etc. For example, I we want to
+track all the files in current directory, we can run command:
+
+\$ git add .
+
+Now, these files are in a staging step, which means they are tracked but
+have not been committed to the repository yet. Our last step is to
+commit the changes to git repository.
+
+\$ git commit -m “Added files for git version tracking”
+
+So far, a git repository has been created. Other developers can clone
+your repository for collaboration. Go to section 5.2 to see how other
+developers can do this.
+
+# Git Tutorial
+
+This section gives suggestions to developers how to transit to the git
+version control system from other systems including CVS.
+
+## Simple configuration 
+
+Git will use your user name and email as identity when committing
+changes. In order to ask git to use this specific information, you need
+to use the following two commands:
+
+\$ git config --global user.name “Shumin Guo”
+
+\$ git config --global user.email “shumin.guo@experian.com”
+
+The --global option in these commands ensures that you only need to
+configure these only once. Git will store to data into your personal
+configuration file \~/.gitconfig. On the other hand, if you don’t want
+these changes permanent, just ignore the --global option.
+
+Next, we need to tell git which editor to use when messages are required
+by git. By default, git will use a system default editor. If you want to
+use different text editor, for example, emacs, you can make the
+following changes.
+
+\$ git config --global core.editor emacs
+
+  The --global option in these commands ensures that you only need to configure these only once. These configurations will be stored in file \~/.gitconfig. If you don’t want these changes to be permanent, the --global option should be removed from the commands.
+
+You can list the configurations so far with command:
+
+\$ git config --list
+
+user.name=Shumin Guo
+
+user.email=shumin.guo@experian.com
+
+core.editor=emacs
+
+In reality, these changes has been written to your file \~/.gitconfig
+
+\$ cat \~/.gitconfig
+
+[user]
+
+name = Shumin Guo
+
+email = shumin.guo@experian.com
+
+[core]
+
+editor = emacs
+
+For any help about a git command, we can use the following commands
+
+\$ git help \<subcommand\>
+
+\$ man git-\<subcommand\>
+
+## Cloning a project from a git repository
+
+To checkout from a cvs repository, we can use either pserver protocol or
+the ssh protocol. The pserver protocol is [TODO] and the ssh protocol is
+more secure.
+
+\$ git clone \<git-repository-uri\> [new name]
+
+## Commit changes to a repository
+
+Source files within a project tree can exist in one of four states:
+
+  **State for git**   **Description **
+  ------------------- ----------------------------------------------------------------------------
+  clean               present in prior commit, unchanged since
+  unstaged            present in prior commit, changes made since not added to next commit
+  staged              not present in prior commit, flagged via git add to include in next commit
+  untracked           not present in prior commit, not added to next commit
+
+Suppose we have a file git.txt that is tracked by git. We start from the
+clean mode, meaning that all changes have been committed to git for
+tracking. Then, we edit this file by, for example adding some content
+using vi. After the changes are saved to the file, it goes from clean
+state to the unstaged state, meaning that git will not track your
+changes unless you ADD it with the git add command. And after the git
+add command, we can use the git commit command to commit changes to the
+git repository.
+
+\$ git add \<files-to-commit\>
+
+\$ git commit -m “\<message\>”
+
+The following figure illustrates the stage transitions for a file:
+
+One advantage of git version control system is that all the revisions
+are local. This makes it much more efficient for git to check the
+revisions, including for example, checking logs and compare revision
+differences etc. For example, we can use the following commands to check
+all the revisions in git.
+
+\$ git log
+
+\$ git describe
+
+\$ git notes
+
+\$ git shortlog
+
+\$ git show
+
+\$ git status
+
+\$ git branch
+
+\$ git tag
+
+\$ git whatchanged
+
+## Update changes from the repository 
+
+\$ git pull \<remote-name-or-local-branch\>
+
+## See what’s happening
+
+\$ git-log
+
+\$ git-describe
+
+\$ git-notes
+
+\$ git-shortlog
+
+\$ git-show
+
+\$ git-status
+
+\$ git-tag
+
+\$ git-whatchanged
+
+## Merge two versions for a repository 
+
+\$ git merge \<branch\>
+
+## GUI clients for git
+
+GUI tools and plugin makes it simple for developers to interact with
+git. As I am not a regular user of git GUI tool, you can find more
+information at [somewhere].
+
+## Tagging
+
+Tagging is helpful for developers to identify special points of during
+the project development process. Tagging is supported by both CVS and
+git. Their syntax of tagging is very close.
+
+\$ git tag [tagname]
+
+# A transition cheat sheet for developers
+
+The following table lists the command comparison of CVS and git.
+
+  **Operations**    **CVS**         **git**
+  ----------------- --------------- ----------------------------
+  Repo init         cvs init        git init / git init --bare
+  Clone             N/A             git clone
+  Pull              N/A             git pull
+  Push              N/A             git push
+  Local branches    N/A             git branch
+  Checkout          cvs checkout    git checkout
+  Update            cvs update      git pull
+  Add               cvs add         git add
+  Remove            cvs rm          git rm
+  Move              N/A             git mv
+  Copy              N/A             git cp / git add
+  Merge             cvs update      git merge
+  Commit            cvs commit      git commit
+  Revert            Remove update   git revert
+  Bundle files      N/A             git bundle
+  Rebase            N/A             git rebase
+  Clean untracked   N/A             git clean [-f -d]
